@@ -16,8 +16,6 @@ io.on('connection', function (socket) {
   user_socket[socket.id] = socket;
   io.emit('connect status', 'user ' + online_user[socket.id] + ' connected', online_user);
 
-  //socket.broadcast.emit('user connected');
-
   socket.on('disconnect', function () {
     var tmp = online_user[socket.id];
     delete online_user[socket.id];
@@ -25,19 +23,15 @@ io.on('connection', function (socket) {
   });
 
   socket.on('typing', function (from) {
-    console.log(from);
     socket.broadcast.emit('typing', from == '' ? '' : from + ' is typing');
   });
 
   socket.on('chat message', function (msg) {
-    //io.emit('chat message', from +' : '+msg);
     socket.broadcast.emit('chat message', online_user[socket.id], msg);
   });
 
   socket.on('modify uid', function (oldname, nickname) {
     online_user[socket.id] = nickname;
-    //delete online_user[socket.id];
-    //online_user[socket.id]=uid;
     io.emit('chat message', online_user[socket.id], 'user ' + oldname + ' modified his nickname to ' + nickname)
     io.emit('online refresh', online_user);
   });

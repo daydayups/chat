@@ -3,74 +3,7 @@
 <head>
   <title>Socket.IO chat</title>
   <link href="bootstrap.css" rel="stylesheet">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font: 13px Helvetica, Arial;
-    }
-
-    form {
-      background: #000;
-      padding: 3px;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-    }
-
-    form input {
-      border: 0;
-      padding: 10px;
-      width: 70%;
-      margin-right: .5%;
-      float: left;
-    }
-
-    form button {
-      width: 9%;
-      background: rgb(130, 224, 255);
-      border: none;
-      padding: 10px;
-      float: left;
-    }
-
-    form select {
-      width: 20%;
-      margin-right: .5%;
-      padding: 8px;
-      float: left;
-    }
-
-    #messages {
-      list-style-type: none;
-      margin: 0;
-      padding: 0;
-      width: 80%
-    }
-
-    #messages li {
-      padding: 5px 10px;
-    }
-
-    #messages li:nth-child(odd) {
-      background: #eee;
-    }
-
-    .online_users {
-      position: fixed;
-      right: 0;
-      width: 20%;
-      height: 100%;
-      padding: 5px;
-      overflow-x: hidden;
-      overflow-y: auto;
-      border-left: 1px solid #ccc;
-    }
-  </style>
+  <link rel="stylesheet" href="index.css"/>
 </head>
 <body>
 <div class="online_users">
@@ -78,11 +11,13 @@
 </div>
 <ul id="messages"></ul>
 <form action="">
-  <select id="sel_user">
-    <option value="">所有人</option>
-  </select>
-  <input id="cur_input" autocomplete="off"/>
-  <button>Send</button>
+  <div class="bottom-bar">
+    <select id="sel_user">
+      <option value="">所有人</option>
+    </select>
+    <input id="cur_input" autocomplete="off"/>
+    <button>Send</button>
+  </div>
 </form>
 
 <div class="modal fade" id="alert-box">
@@ -90,15 +25,15 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title">Modifiy user nickname</h4>
+        <h4 class="modal-title">修改用户昵称</h4>
       </div>
       <div class="modal-body">
-        <label for="nickname">nickname:</label>
+        <label for="nickname">用户昵称:</label>
         <input type="text" name="nickname" id="nickname"/>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" onclick="modify_uid()">Save changes</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">关闭</button>
+        <button type="button" class="btn btn-primary" onclick="modify_uid()">保存</button>
       </div>
     </div>
     <!-- /.modal-content -->
@@ -108,12 +43,23 @@
 <!-- /.modal -->
 
 <script src="/socket.io/socket.io.js"></script>
-<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="//code.jquery.com/jquery-1.11.1.js"></script>
 <script src="bootstrap.js"></script>
 <script>
+  /* 保持底部fixed的聊天输入框不会覆盖 聊天区域#messages 和 在线用户显示区域.online_users*/
+  var navbarH = $("div.bottom-bar").height();
+  $("#messages").css("margin-bottom", navbarH + 10);
+  $(".online_users").css("padding-bottom", navbarH + 10);
+
   var socket = io();
   var online_list;
   var cur_user;
+
+  /* 当 #messages 聊天区域 有新增内容，将滚动条滚动到最底部 保持显示新信息*/
+  $("#messages").bind('DOMNodeInserted', function (e) {
+    $('body').scrollTop($('#messages')[0].scrollHeight);
+  });
+
   /*
    当群聊时，
    用户输入时，其他用户显示 xx is typing；
@@ -186,7 +132,7 @@
     $('.online').empty();
     var html = ['<p>在线用户</p>'];
     var options = ['<option value="">所有人</option>'];
-    console.log(online, cur_user)
+//    console.log(online, cur_user);
     for (key in online) {
       uname = online[key];
       if (key == '/#' + socket.id) {
