@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Socket.IO chat</title>
+  <link href="bootstrap.css" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -24,8 +25,10 @@
     form input {
       border: 0;
       padding: 10px;
-      width: 90%;
+      width: 80%;
       margin-right: .5%;
+
+      float: left;
     }
 
     form button {
@@ -33,6 +36,8 @@
       background: rgb(130, 224, 255);
       border: none;
       padding: 10px;
+
+      float: left;
     }
 
     #messages {
@@ -48,22 +53,54 @@
     #messages li:nth-child(odd) {
       background: #eee;
     }
+
+    #user {
+      width: 10%;
+      padding: 10px;
+      float: left;
+    }
   </style>
 </head>
 <body>
 <p>在线用户</p>
+
 <div class="online">
 
 </div>
 <ul id="messages"></ul>
 <form action="">
-  <input id="m" autocomplete="off"/><button>Send</button>
+  <span id="user"></span><input id="m" autocomplete="off"/>
+  <button>Send</button>
 </form>
+
+<div class="modal fade" id="alert-box">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title">Modifiy user nickname</h4>
+      </div>
+      <div class="modal-body">
+        <label for="nickname">nickname:</label>
+        <input type="text" name="nickname" id="nickname"/>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="modify_uid()">Save changes</button>
+      </div>
+    </div>
+    <!-- /.modal-content -->
+  </div>
+  <!-- /.modal-dialog -->
+</div>
+<!-- /.modal -->
+
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="bootstrap.js"></script>
 <script>
-  //  var uid = Math.floor(Math.random() * 10000);
   var socket = io();
+  var online_list;
   var nickname;
   $('#m').bind('input propertychange', function () {
     socket.emit('typing', nickname);
@@ -71,26 +108,24 @@
 
   $('form').submit(function () {
     $('#messages').append($('<li>').text(nickname + " : " + $('#m').val()));
-    socket.emit('chat message', nickname, $('#m').val());
+    socket.emit('chat message', $('#m').val());
     $('#m').val('');
     return false;
   });
 
-  socket.on('connect status', function (uid, msg,online) {
-    nickname = uid;
+  socket.on('connect status', function (msg, online) {
+    online_list = online;
+    nickname = online_list['/#' + socket.id];
+    $('#user').html(nickname);
+    $("#nickname").val(nickname);
     $('#messages').append($('<li>').text(msg));
-    console.log(online);
-    $('.online').empty();
-    for (k in online){
-      v=online[k];
-      $('.online').append($('<div data-uid='+v+'>'+v+'</div>'));
-    }
+
+    online_refresh(online);
   });
 
-  socket.on('chat message', function (uid, msg) {
-    nickname = uid;
+  socket.on('chat message', function (from, msg) {
     $('#messages li.msg').remove();
-    $('#messages').append($('<li>').text(nickname + " : " + msg));
+    $('#messages').append($('<li>').text(from + " : " + msg));
   });
 
   socket.on('typing', function (msg) {
@@ -100,6 +135,39 @@
     }
 
   });
+
+  socket.on('online refresh', function (online) {
+    online_refresh(online);
+  });
+
+  function modify_uid(uid) {
+    var value = $("#nickname").val();
+    if (value != nickname) {
+      socket.emit('modify uid', nickname, value);
+//      $('#messages').append($('<li>').text(nickname + " modified nickname to :" + value));
+      nickname = value;
+      $('#user').html(nickname);
+    }
+
+    $('#alert-box').modal('hide');
+  }
+
+  function online_refresh(online) {
+    $('.online').empty();
+    console.log(online, nickname)
+    for (k in online) {
+      v = online[k];
+      if (k == '/#' + socket.id) {
+        $('.online').append(
+            $('<div data-uid=' + v +
+                '> <a href="#" onclick="' +
+                "$('#alert-box').modal('show')" +
+                '">' + v + '</a></div>'));
+      } else {
+        $('.online').append($('<div data-uid=' + v + '>' + v + '</div>'));
+      }
+    }
+  }
 </script>
 
 </body>
