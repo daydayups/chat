@@ -13,14 +13,17 @@ app.get('/', function (req, res) {
  });
  });
  */
+var online = {};
 io.on('connection', function (socket) {
   var uid = Math.floor(Math.random() * 10000);
-  io.emit('chat message', uid, 'user connected');
+  online[uid] = uid;
+  io.emit('connect status', uid, 'user ' + uid + ' connected', online);
 
   //socket.broadcast.emit('user connected');
 
   socket.on('disconnect', function () {
-    io.emit('chat message', uid, 'user disconnected');
+    delete online[uid];
+    io.emit('connect status', uid, 'user ' + uid + ' disconnected', online);
   });
 
   socket.on('typing', function (from) {
@@ -28,8 +31,6 @@ io.on('connection', function (socket) {
   });
 
   socket.on('chat message', function (from, msg) {
-    console.log(from, msg);
-
     //io.emit('chat message', from +' : '+msg);
     socket.broadcast.emit('chat message', from, msg);
   });

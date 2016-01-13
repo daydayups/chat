@@ -51,6 +51,10 @@
   </style>
 </head>
 <body>
+<p>在线用户</p>
+<div class="online">
+
+</div>
 <ul id="messages"></ul>
 <form action="">
   <input id="m" autocomplete="off"/><button>Send</button>
@@ -58,7 +62,7 @@
 <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script>
-//  var uid = Math.floor(Math.random() * 10000);
+  //  var uid = Math.floor(Math.random() * 10000);
   var socket = io();
   var nickname;
   $('#m').bind('input propertychange', function () {
@@ -71,11 +75,24 @@
     $('#m').val('');
     return false;
   });
-  socket.on('chat message', function (uid,msg) {
+
+  socket.on('connect status', function (uid, msg,online) {
+    nickname = uid;
+    $('#messages').append($('<li>').text(msg));
+    console.log(online);
+    $('.online').empty();
+    for (k in online){
+      v=online[k];
+      $('.online').append($('<div data-uid='+v+'>'+v+'</div>'));
+    }
+  });
+
+  socket.on('chat message', function (uid, msg) {
     nickname = uid;
     $('#messages li.msg').remove();
     $('#messages').append($('<li>').text(nickname + " : " + msg));
   });
+
   socket.on('typing', function (msg) {
     var li = $('#messages li.msg');
     if (li.length == 0) {
