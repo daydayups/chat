@@ -25,7 +25,8 @@ io.on('connection', function (socket) {
   });
 
   socket.on('typing', function (from) {
-    socket.broadcast.emit('typing', from + ' is typing');
+    console.log(from);
+    socket.broadcast.emit('typing', from == '' ? '' : from + ' is typing');
   });
 
   socket.on('chat message', function (msg) {
@@ -55,10 +56,10 @@ http.listen(3000, function () {
 
 /*
  -Broadcast a message to connected users when someone connects or disconnects
- Add support for nicknames
+ -Add support for nicknames
  -Don't send the same message to the user that sent it himself. Instead, append the message directly as soon as he presses enter.
  -Add '{user} is typing' functionality
  -Show who's online
- Add private messaging
+ -Add private messaging
  Share your improvements!
  */

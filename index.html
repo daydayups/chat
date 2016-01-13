@@ -60,12 +60,6 @@
       background: #eee;
     }
 
-    #cur_speaker {
-      width: 10%;
-      padding: 10px;
-      float: left;
-    }
-
     .online_users {
       position: fixed;
       right: 0;
@@ -84,7 +78,6 @@
 </div>
 <ul id="messages"></ul>
 <form action="">
-  <!--<span id="cur_speaker"></span>-->
   <select id="sel_user">
     <option value="">所有人</option>
   </select>
@@ -121,29 +114,43 @@
   var socket = io();
   var online_list;
   var cur_user;
+  /*
+   当群聊时，
+   用户输入时，其他用户显示 xx is typing；
+   用户清空输入，其他用户取消提示信息；
+   当私聊时，清空其他提示信息。
+   */
   $('#cur_input').bind('input propertychange', function () {
-    if ($('#sel_user :selected').text() == "所有人" ){
+    if ($('#sel_user :selected').text() == "所有人" && $("#cur_input").val() != "") {
       socket.emit('typing', cur_user);
+    } else {
+      socket.emit('typing', '');
     }
   });
 
   $('form').submit(function () {
-    var sel_user = $('#sel_user :selected').text();//$('#sel_user').val();
-    if (sel_user == "所有人") {
+    var sel_user = $('#sel_user :selected').text();
+    if (sel_user == "所有人") {//群聊
       $('#messages').append($('<li>').text(cur_user + " : " + $('#cur_input').val()));
       socket.emit('chat message', $('#cur_input').val());
-    } else {
-      $('#messages').append($('<li>').text("(我 悄悄话 " + sel_user + ") : "+ $('#cur_input').val()));
-      socket.emit('private message',$('#sel_user').val() , $('#cur_input').val());
+    } else {//私聊
+      $('#messages').append($('<li>').text("(我 悄悄话 " + sel_user + ") : " + $('#cur_input').val()));
+      socket.emit('private message', $('#sel_user').val(), $('#cur_input').val());
     }
     $('#cur_input').val('');
     return false;
   });
 
+  /*
+   链接状态
+   接收当前在线用户数组，
+   确定当前用户
+   显示链接提示
+   更新‘在线用户’
+   */
   socket.on('connect status', function (msg, online) {
     online_list = online;
     cur_user = online_list['/#' + socket.id];
-    $('#cur_speaker').html(cur_user);
     $("#nickname").val(cur_user);
     $('#messages').append($('<li>').text(msg));
     updateOnlineUser(online);
@@ -155,8 +162,8 @@
   });
 
   socket.on('typing', function (msg) {
-    var li = $('#messages li.msg');
-    if (li.length == 0) {
+    $('#messages li.msg').remove();
+    if (msg != "") {
       $('#messages').append($('<li class="msg">').text(msg));
     }
   });
@@ -170,7 +177,6 @@
     if (nickname != cur_user) {
       socket.emit('modify uid', cur_user, nickname);
       cur_user = nickname;
-      $('#cur_speaker').html(cur_user);
     }
 
     $('#alert-box').modal('hide');
@@ -203,6 +209,5 @@
     }
   }
 </script>
-
 </body>
 </html>
