@@ -25,9 +25,8 @@
     form input {
       border: 0;
       padding: 10px;
-      width: 80%;
+      width: 70%;
       margin-right: .5%;
-
       float: left;
     }
 
@@ -36,7 +35,13 @@
       background: rgb(130, 224, 255);
       border: none;
       padding: 10px;
+      float: left;
+    }
 
+    form select {
+      width: 20%;
+      margin-right: .5%;
+      padding: 8px;
       float: left;
     }
 
@@ -44,6 +49,7 @@
       list-style-type: none;
       margin: 0;
       padding: 0;
+      width: 80%
     }
 
     #messages li {
@@ -54,22 +60,35 @@
       background: #eee;
     }
 
-    #user {
+    #cur_speaker {
       width: 10%;
       padding: 10px;
       float: left;
     }
+
+    .online_users {
+      position: fixed;
+      right: 0;
+      width: 20%;
+      height: 100%;
+      padding: 5px;
+      overflow-x: hidden;
+      overflow-y: auto;
+      border-left: 1px solid #ccc;
+    }
   </style>
 </head>
 <body>
-<p>在线用户</p>
-
-<div class="online">
+<div class="online_users">
 
 </div>
 <ul id="messages"></ul>
 <form action="">
-  <span id="user"></span><input id="m" autocomplete="off"/>
+  <!--<span id="cur_speaker"></span>-->
+  <select id="sel_user">
+    <option value="">所有人</option>
+  </select>
+  <input id="cur_input" autocomplete="off"/>
   <button>Send</button>
 </form>
 
@@ -101,26 +120,33 @@
 <script>
   var socket = io();
   var online_list;
-  var nickname;
-  $('#m').bind('input propertychange', function () {
-    socket.emit('typing', nickname);
+  var cur_user;
+  $('#cur_input').bind('input propertychange', function () {
+    if ($('#sel_user :selected').text() == "所有人" ){
+      socket.emit('typing', cur_user);
+    }
   });
 
   $('form').submit(function () {
-    $('#messages').append($('<li>').text(nickname + " : " + $('#m').val()));
-    socket.emit('chat message', $('#m').val());
-    $('#m').val('');
+    var sel_user = $('#sel_user :selected').text();//$('#sel_user').val();
+    if (sel_user == "所有人") {
+      $('#messages').append($('<li>').text(cur_user + " : " + $('#cur_input').val()));
+      socket.emit('chat message', $('#cur_input').val());
+    } else {
+      $('#messages').append($('<li>').text("(我 悄悄话 " + sel_user + ") : "+ $('#cur_input').val()));
+      socket.emit('private message',$('#sel_user').val() , $('#cur_input').val());
+    }
+    $('#cur_input').val('');
     return false;
   });
 
   socket.on('connect status', function (msg, online) {
     online_list = online;
-    nickname = online_list['/#' + socket.id];
-    $('#user').html(nickname);
-    $("#nickname").val(nickname);
+    cur_user = online_list['/#' + socket.id];
+    $('#cur_speaker').html(cur_user);
+    $("#nickname").val(cur_user);
     $('#messages').append($('<li>').text(msg));
-
-    online_refresh(online);
+    updateOnlineUser(online);
   });
 
   socket.on('chat message', function (from, msg) {
@@ -133,39 +159,47 @@
     if (li.length == 0) {
       $('#messages').append($('<li class="msg">').text(msg));
     }
-
   });
 
   socket.on('online refresh', function (online) {
-    online_refresh(online);
+    updateOnlineUser(online);
   });
 
   function modify_uid(uid) {
-    var value = $("#nickname").val();
-    if (value != nickname) {
-      socket.emit('modify uid', nickname, value);
-//      $('#messages').append($('<li>').text(nickname + " modified nickname to :" + value));
-      nickname = value;
-      $('#user').html(nickname);
+    var nickname = $("#nickname").val();
+    if (nickname != cur_user) {
+      socket.emit('modify uid', cur_user, nickname);
+      cur_user = nickname;
+      $('#cur_speaker').html(cur_user);
     }
 
     $('#alert-box').modal('hide');
   }
 
-  function online_refresh(online) {
+  function updateOnlineUser(online) {
     $('.online').empty();
-    console.log(online, nickname)
-    for (k in online) {
-      v = online[k];
-      if (k == '/#' + socket.id) {
-        $('.online').append(
-            $('<div data-uid=' + v +
-                '> <a href="#" onclick="' +
-                "$('#alert-box').modal('show')" +
-                '">' + v + '</a></div>'));
+    var html = ['<p>在线用户</p>'];
+    var options = ['<option value="">所有人</option>'];
+    console.log(online, cur_user)
+    for (key in online) {
+      uname = online[key];
+      if (key == '/#' + socket.id) {
+        html.push('<div data-uid=' + uname +
+            '> <a href="#" onclick="' +
+            "$('#alert-box').modal('show')" +
+            '">' + uname + '</a> 我 </div>');
+//        $('.online_users').append(
+//            $('<div data-uid=' + uname +
+//                '> <a href="#" onclick="' +
+//                "$('#alert-box').modal('show')" +
+//                '">' + uname + '</a></div>'));
       } else {
-        $('.online').append($('<div data-uid=' + v + '>' + v + '</div>'));
+        html.push('<div data-uid=' + uname + '>' + uname + '</div>');
+//        $('.online_users').append($('<div data-uid=' + uname + '>' + uname + '</div>'));
+        options.push('<option value="' + key + '">' + uname + '</option>')
       }
+      $('.online_users').html(html.join(''));
+      $('#sel_user').html(options.join(''));
     }
   }
 </script>
