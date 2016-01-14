@@ -2,20 +2,18 @@
 <html>
 <head>
   <title>Socket.IO chat</title>
-  <link href="bootstrap.css" rel="stylesheet">
+  <link rel="stylesheet" href="bootstrap.css"/>
   <link rel="stylesheet" href="index.css"/>
 </head>
 <body>
-<div class="online_users">
-
-</div>
+<div class="online-users"></div>
 <ul id="messages"></ul>
 <form action="">
   <div class="bottom-bar">
-    <select id="sel_user">
+    <select id="sel-user">
       <option value="">所有人</option>
     </select>
-    <input id="cur_input" autocomplete="off"/>
+    <input id="cur-input" autocomplete="off"/>
     <button>Send</button>
   </div>
 </form>
@@ -36,20 +34,17 @@
         <button type="button" class="btn btn-primary" onclick="modify_uid()">保存</button>
       </div>
     </div>
-    <!-- /.modal-content -->
   </div>
-  <!-- /.modal-dialog -->
 </div>
-<!-- /.modal -->
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="//code.jquery.com/jquery-1.11.1.js"></script>
 <script src="bootstrap.js"></script>
 <script>
-  /* 保持底部fixed的聊天输入框不会覆盖 聊天区域#messages 和 在线用户显示区域.online_users*/
+  /* 保持底部fixed的聊天输入框不会覆盖 聊天区域#messages 和 在线用户显示区域.online-users*/
   var navbarH = $("div.bottom-bar").height();
   $("#messages").css("margin-bottom", navbarH + 10);
-  $(".online_users").css("padding-bottom", navbarH + 10);
+  $(".online-users").css("padding-bottom", navbarH + 10);
 
   var socket = io();
   var online_list;
@@ -66,8 +61,8 @@
    用户清空输入，其他用户取消提示信息；
    当私聊时，清空其他提示信息。
    */
-  $('#cur_input').bind('input propertychange', function () {
-    if ($('#sel_user :selected').text() == "所有人" && $("#cur_input").val() != "") {
+  $('#cur-input').bind('input propertychange', function () {
+    if ($('#sel-user :selected').text() == "所有人" && $("#cur-input").val() != "") {
       socket.emit('typing', cur_user);
     } else {
       socket.emit('typing', '');
@@ -75,15 +70,15 @@
   });
 
   $('form').submit(function () {
-    var sel_user = $('#sel_user :selected').text();
+    var sel_user = $('#sel-user :selected').text();
     if (sel_user == "所有人") {//群聊
-      $('#messages').append($('<li>').text(cur_user + " : " + $('#cur_input').val()));
-      socket.emit('chat message', $('#cur_input').val());
+      $('#messages').append($('<li>').text(cur_user + " : " + $('#cur-input').val()));
+      socket.emit('chat message', $('#cur-input').val());
     } else {//私聊
-      $('#messages').append($('<li>').text("(我 悄悄话 " + sel_user + ") : " + $('#cur_input').val()));
-      socket.emit('private message', $('#sel_user').val(), $('#cur_input').val());
+      $('#messages').append($('<li>').text("(我 悄悄话 " + sel_user + ") : " + $('#cur-input').val()));
+      socket.emit('private message', $('#sel-user').val(), $('#cur-input').val());
     }
-    $('#cur_input').val('');
+    $('#cur-input').val('');
     return false;
   });
 
@@ -115,6 +110,7 @@
   });
 
   socket.on('online refresh', function (online) {
+    online_list = online;
     updateOnlineUser(online);
   });
 
@@ -130,7 +126,7 @@
 
   function updateOnlineUser(online) {
     $('.online').empty();
-    var html = ['<p>在线用户</p>'];
+    var html = ['<p>在线用户 共' + Object.keys(online).length + '人</p>'];
     var options = ['<option value="">所有人</option>'];
 //    console.log(online, cur_user);
     for (key in online) {
@@ -140,18 +136,18 @@
             '> <a href="#" onclick="' +
             "$('#alert-box').modal('show')" +
             '">' + uname + '</a> 我 </div>');
-//        $('.online_users').append(
+//        $('.online-users').append(
 //            $('<div data-uid=' + uname +
 //                '> <a href="#" onclick="' +
 //                "$('#alert-box').modal('show')" +
 //                '">' + uname + '</a></div>'));
       } else {
         html.push('<div data-uid=' + uname + '>' + uname + '</div>');
-//        $('.online_users').append($('<div data-uid=' + uname + '>' + uname + '</div>'));
+//        $('.online-users').append($('<div data-uid=' + uname + '>' + uname + '</div>'));
         options.push('<option value="' + key + '">' + uname + '</option>')
       }
-      $('.online_users').html(html.join(''));
-      $('#sel_user').html(options.join(''));
+      $('.online-users').html(html.join(''));
+      $('#sel-user').html(options.join(''));
     }
   }
 </script>
