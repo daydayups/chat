@@ -33,8 +33,8 @@
 
 })((function () {
   if (typeof exports === 'undefined') {
-    window.chatLib = {};
-    return window.chatLib;
+    window.lib = {};
+    return window.lib;
   } else {
     return exports;
   }
