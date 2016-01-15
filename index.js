@@ -8,18 +8,18 @@ app.get('/', function (req, res) {
 });
 app.use(express.static('public'));
 
-var online_user = {};
-var user_socket = {};
+var onlineUsers = {};
+var userSockets = {};
 io.on('connection', function (socket) {
   var uid = Math.floor(Math.random() * 10000);
-  online_user[socket.id] = uid;
-  user_socket[socket.id] = socket;
-  io.emit('connect status', 'user ' + online_user[socket.id] + ' connected', online_user);
+  onlineUsers[socket.id] = uid;
+  userSockets[socket.id] = socket;
+  io.emit('connect status', 'user ' + onlineUsers[socket.id] + ' connected', onlineUsers);
 
   socket.on('disconnect', function () {
-    var tmp = online_user[socket.id];
-    delete online_user[socket.id];
-    io.emit('connect status', 'user ' + tmp + ' disconnected', online_user);
+    var tmp = onlineUsers[socket.id];
+    delete onlineUsers[socket.id];
+    io.emit('connect status', 'user ' + tmp + ' disconnected', onlineUsers);
   });
 
   socket.on('typing', function (from) {
@@ -27,17 +27,17 @@ io.on('connection', function (socket) {
   });
 
   socket.on('chat message', function (msg) {
-    socket.broadcast.emit('chat message', online_user[socket.id], msg);
+    socket.broadcast.emit('chat message', onlineUsers[socket.id], msg);
   });
 
-  socket.on('modify uid', function (oldname, nickname) {
-    online_user[socket.id] = nickname;
-    io.emit('chat message', online_user[socket.id], 'user ' + oldname + ' modified his nickname to ' + nickname)
-    io.emit('online refresh', online_user);
+  socket.on('modify nickname', function (oldname, nickname) {
+    onlineUsers[socket.id] = nickname;
+    io.emit('chat message', onlineUsers[socket.id], 'user ' + oldname + ' modified his nickname to ' + nickname)
+    io.emit('online refresh', onlineUsers);
   });
 
-  socket.on('private message', function (s_id, msg) {
-    user_socket[s_id].emit('chat message', "(" + online_user[socket.id] + " 悄悄话 我)", msg);
+  socket.on('private message', function (sId, msg) {
+    userSockets[sId].emit('chat message', "(" + onlineUsers[socket.id] + " 悄悄话 我)", msg);
   });
 
 });
