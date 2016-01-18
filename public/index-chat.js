@@ -15,7 +15,7 @@ $("#messages").bind('DOMNodeInserted', function (e) {
 var socket = io();
 var onlineList;//,onlineList2;
 var curUser;
-
+var historyMessages;
 /*
  当群聊时，
  用户输入时，其他用户显示 xx is typing；
@@ -40,6 +40,7 @@ $('form').submit(function () {
     socket.emit('private message', $('#sel-user').val(), $('#cur-input').val());
   }
   $('#cur-input').val('');
+  $('#messages li.msg').remove();
   return false;
 });
 
@@ -50,21 +51,28 @@ $('form').submit(function () {
  显示链接提示
  更新‘在线用户’
  */
-socket.on('connected', function (online,uid) {
+socket.on('connected', function (online, uid, historyMsgs) {
+  historyMessages = historyMsgs;
   onlineList = online;
   curUser = onlineList['/#' + socket.id];
   $("#nickname").val(curUser);
+  if (uid == curUser && historyMessages.length > 0) {
+    for (var i = 0; i < historyMessages.length; i++) {
+      appendHisMessage(historyMessages[i]);
+    }
+    appendHisMessage("==================以上为最近的历史消息==================");
+  }
   appendMessage('user ' + uid + ' connected');
   updateOnlineUser();
 });
 
 //socket.on('connected test', function (online) {
-  //onlineList2 = online;
-  //console.log(onlineList2,socket.id);
-  //curUser = onlineList2['/#' + socket.id].nick;
-  //$("#nickname").val(curUser);
-  //appendMessage('user ' + curUser + ' connected');
-  //updateOnlineUser();
+//onlineList2 = online;
+//console.log(onlineList2,socket.id);
+//curUser = onlineList2['/#' + socket.id].nick;
+//$("#nickname").val(curUser);
+//appendMessage('user ' + curUser + ' connected');
+//updateOnlineUser();
 //});
 
 socket.on('disconnect', function (sid) {
@@ -95,6 +103,10 @@ socket.on('modify nickname', function (online, msg) {
 
 function appendMessage(msg) {
   $('#messages').append($('<li>').text(msg));
+}
+
+function appendHisMessage(msg) {
+  $('#messages').append($('<li>').append($('<span style="color:#ccc">').text(msg)));
 }
 
 function modifyNickname() {

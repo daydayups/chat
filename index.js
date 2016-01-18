@@ -10,13 +10,14 @@ app.use(express.static('public'));
 
 var onlineUsers = {};
 var userSockets = {};
-
+var historyMsgs = [];
+var KEEP_MSGS_LENGTH = 5; // 保持历史信息条数
 //var onlineUsers2={};
 io.on('connection', function (socket) {
   var uid = Math.floor(Math.random() * 10000);
   onlineUsers[socket.id] = uid;
   userSockets[socket.id] = socket;
-  io.emit('connected', onlineUsers, uid);
+  io.emit('connected', onlineUsers, uid, historyMsgs);
   //var newUser = {'uid': socket.id, 'nick': uid};
   //onlineUsers2[socket.id] = newUser;
 
@@ -32,6 +33,10 @@ io.on('connection', function (socket) {
   });
 
   socket.on('chat message', function (msg) {
+    historyMsgs.push(onlineUsers[socket.id] + " : " + msg);
+    if (historyMsgs.length > KEEP_MSGS_LENGTH) {
+      historyMsgs.shift();
+    }
     socket.broadcast.emit('chat message', onlineUsers[socket.id], msg);
   });
 
