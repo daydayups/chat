@@ -32,11 +32,11 @@ $('#cur-input').bind('input propertychange', function () {
 
 $('form').submit(function () {
   var selUser = $('#sel-user :selected').text();
-  if (selUser == "所有人") {//群聊
-    $('#messages').append($('<li>').text(curUser + " : " + $('#cur-input').val()));
+  if ($('#sel-user').val() == "") {//群聊
+    appendMessage(curUser + " : " + $('#cur-input').val());
     socket.emit('chat message', $('#cur-input').val());
   } else {//私聊
-    $('#messages').append($('<li>').text("(我 悄悄话 " + selUser + ") : " + $('#cur-input').val()));
+    appendMessage("(我 悄悄话 " + selUser + ") : " + $('#cur-input').val());
     socket.emit('private message', $('#sel-user').val(), $('#cur-input').val());
   }
   $('#cur-input').val('');
@@ -50,17 +50,25 @@ $('form').submit(function () {
  显示链接提示
  更新‘在线用户’
  */
-socket.on('connect status', function (msg, online) {
+socket.on('connected', function (online) {
   onlineList = online;
   curUser = onlineList['/#' + socket.id];
   $("#nickname").val(curUser);
-  $('#messages').append($('<li>').text(msg));
-  updateOnlineUser(online);
+  appendMessage('user ' + curUser + ' connected');
+  updateOnlineUser();
+});
+
+socket.on('disconnect', function (sid) {
+  console.log(sid, onlineList);
+  var user = onlineList[sid];
+  delete onlineList[sid];
+  appendMessage('user ' + user + ' disconnected');
+  updateOnlineUser();
 });
 
 socket.on('chat message', function (from, msg) {
   $('#messages li.msg').remove();
-  $('#messages').append($('<li>').text(from + " : " + msg));
+  appendMessage(from + " : " + msg);
 });
 
 socket.on('typing', function (msg) {
@@ -70,10 +78,15 @@ socket.on('typing', function (msg) {
   }
 });
 
-socket.on('online refresh', function (online) {
+socket.on('modify nickname', function (online, msg) {
   onlineList = online;
-  updateOnlineUser(online);
+  updateOnlineUser();
+  appendMessage(msg);
 });
+
+function appendMessage(msg) {
+  $('#messages').append($('<li>').text(msg));
+}
 
 function modifyNickname() {
   var nickname = $("#nickname").val();
@@ -84,12 +97,12 @@ function modifyNickname() {
   $('#alert-box').modal('hide');
 }
 
-function updateOnlineUser(online) {
+function updateOnlineUser() {
   $('.online').empty();
-  var html = ['<p>在线用户 共' + Object.keys(online).length + '人</p>'];
+  var html = ['<p>在线用户 共' + Object.keys(onlineList).length + '人</p>'];
   var options = ['<option value="">所有人</option>'];
-  for (key in online) {
-    uname = online[key];
+  for (var key in onlineList) {
+    var uname = onlineList[key];
     if (key == '/#' + socket.id) {
       html.push('<div data-uid=' + uname +
         '> <a href="#" onclick="' +

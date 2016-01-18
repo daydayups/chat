@@ -14,12 +14,11 @@ io.on('connection', function (socket) {
   var uid = Math.floor(Math.random() * 10000);
   onlineUsers[socket.id] = uid;
   userSockets[socket.id] = socket;
-  io.emit('connect status', 'user ' + onlineUsers[socket.id] + ' connected', onlineUsers);
+  io.emit('connected', onlineUsers);
 
   socket.on('disconnect', function () {
-    var tmp = onlineUsers[socket.id];
     delete onlineUsers[socket.id];
-    io.emit('connect status', 'user ' + tmp + ' disconnected', onlineUsers);
+    io.emit('disconnect', socket.id);
   });
 
   socket.on('typing', function (from) {
@@ -32,8 +31,7 @@ io.on('connection', function (socket) {
 
   socket.on('modify nickname', function (oldname, nickname) {
     onlineUsers[socket.id] = nickname;
-    io.emit('chat message', onlineUsers[socket.id], 'user ' + oldname + ' modified his nickname to ' + nickname)
-    io.emit('online refresh', onlineUsers);
+    io.emit('modify nickname', onlineUsers, 'user ' + oldname + ' modified his nickname to ' + nickname);
   });
 
   socket.on('private message', function (sId, msg) {
@@ -41,7 +39,6 @@ io.on('connection', function (socket) {
   });
 
 });
-
 
 http.listen(3000, function () {
   console.log('listening on *:3000');
