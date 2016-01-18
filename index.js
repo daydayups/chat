@@ -10,11 +10,17 @@ app.use(express.static('public'));
 
 var onlineUsers = {};
 var userSockets = {};
+
+//var onlineUsers2={};
 io.on('connection', function (socket) {
   var uid = Math.floor(Math.random() * 10000);
   onlineUsers[socket.id] = uid;
   userSockets[socket.id] = socket;
-  io.emit('connected', onlineUsers);
+  io.emit('connected', onlineUsers, uid);
+  //var newUser = {'uid': socket.id, 'nick': uid};
+  //onlineUsers2[socket.id] = newUser;
+
+  //io.emit('connected test', onlineUsers2);
 
   socket.on('disconnect', function () {
     delete onlineUsers[socket.id];

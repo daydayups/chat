@@ -13,7 +13,7 @@ $("#messages").bind('DOMNodeInserted', function (e) {
 });
 
 var socket = io();
-var onlineList;
+var onlineList;//,onlineList2;
 var curUser;
 
 /*
@@ -50,13 +50,22 @@ $('form').submit(function () {
  显示链接提示
  更新‘在线用户’
  */
-socket.on('connected', function (online) {
+socket.on('connected', function (online,uid) {
   onlineList = online;
   curUser = onlineList['/#' + socket.id];
   $("#nickname").val(curUser);
-  appendMessage('user ' + curUser + ' connected');
+  appendMessage('user ' + uid + ' connected');
   updateOnlineUser();
 });
+
+//socket.on('connected test', function (online) {
+  //onlineList2 = online;
+  //console.log(onlineList2,socket.id);
+  //curUser = onlineList2['/#' + socket.id].nick;
+  //$("#nickname").val(curUser);
+  //appendMessage('user ' + curUser + ' connected');
+  //updateOnlineUser();
+//});
 
 socket.on('disconnect', function (sid) {
   console.log(sid, onlineList);
